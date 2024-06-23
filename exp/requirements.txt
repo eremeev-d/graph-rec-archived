@@ -1,0 +1,2 @@
+-r ../requirements.txt  # install base requirements of app
+pyspark==3.5.1  # for ALS

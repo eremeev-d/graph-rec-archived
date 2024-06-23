@@ -1,6 +1,10 @@
-from data import items_data
+import pandas as pd
 
 
-def search_items(search_term, n_items=10):
-    results = items_data[items_data["title"].str.contains(search_term, case=False)].index
-    return results[:n_items]
+class SearchSystem:
+    def __init__(self, items_path):
+        self._items = pd.read_csv(items_path)
+
+    def search_items(self, query, n_items=10):
+        results = self._items[self._items["title"].str.contains(query, case=False)].index
+        return results[:n_items]
