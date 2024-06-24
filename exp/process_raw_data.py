@@ -25,17 +25,18 @@ def process_raw_data(input_directory, save_directory, positive_rating_threshold 
 
 
 def create_train_val_split(ratings_path, train_savepath, val_savepath, seed=42):
-    np.random.seed(seed)
-    
     ratings = pd.read_csv(ratings_path)
-    shuffled_indices = np.random.permutation(ratings.index)
-    train_size = int(len(ratings) * 0.8)
-    
-    train_indices = shuffled_indices[:train_size]
-    val_indices = shuffled_indices[train_size:]
+    user_ids = ratings["user_id"].unique()
 
-    train_data = ratings.loc[train_indices]
-    val_data = ratings.loc[val_indices]
+    rng = np.random.default_rng(seed=seed)
+    train_size = int(len(user_ids) * 0.9)
+    train_indices = rng.choice(user_ids, size=train_size, replace=False)
+
+    train_data = ratings.loc[ratings["user_id"].isin(train_indices)]
+    val_data = ratings.loc[~ratings["user_id"].isin(train_indices)]
+
+    print(f"Train size: {len(train_data)}.")
+    print(f"Validation size: {len(val_data)}.")
 
     train_data.to_csv(train_savepath, index=False)
     val_data.to_csv(val_savepath, index=False)

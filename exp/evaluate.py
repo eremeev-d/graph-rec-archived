@@ -56,24 +56,5 @@ def evaluate_recsys(
         metrics[metric] = np.mean(array)
 
     with open(metrics_savepath, "w") as f:
-        json.dump(metrics, f)    
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluate recommender system.")
-    
-    parser.add_argument("--metrics_savepath", type=str, required=True, help="Path to save evaluation metrics")
-    parser.add_argument("--val_ratings_path", type=str, required=True, help="Path to the validation ratings file.")
-    parser.add_argument("--faiss_index_path", type=str, required=True, help="Path to the FAISS index file.")
-    parser.add_argument("--embeddings_path", type=str, required=True, help="Path to the embeddings file.")
-    parser.add_argument("--n_recommend_items", type=int, default=10, help="Number of items to recommend (default: 10).")
-    
-    args = parser.parse_args()
-
-    metrics = evaluate_recsys(
-        metrics_savepath=args.metrics_savepath,
-        val_ratings_path=args.val_ratings_path,
-        faiss_index_path=args.faiss_index_path,
-        embeddings_path=args.embeddings_path,
-        n_recommend_items=args.n_recommend_items
-    )
+        json.dump(metrics, f)
+    print(f"Saved metrics to {metrics_savepath}")

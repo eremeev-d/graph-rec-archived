@@ -9,8 +9,10 @@ from pyspark.ml.recommendation import ALS
 from pyspark.ml.evaluation import RegressionEvaluator
 from pyspark.sql.functions import col
 
+from utils import normalize_embeddings, build_index
 
-def prepare_als_embeddings(items_path, ratings_path, save_directory, rank, maxIter, regParam):
+
+def prepare_als_embeddings(items_path, ratings_path, save_directory, rank, max_iter, reg_param):
     ### Compute ALS embeddings using Spark
     spark = SparkSession.builder.appName("ALS").getOrCreate()
     
@@ -22,8 +24,8 @@ def prepare_als_embeddings(items_path, ratings_path, save_directory, rank, maxIt
 
     als = ALS(
         rank=rank,
-        maxIter=maxIter, 
-        regParam=regParam, 
+        maxIter=max_iter, 
+        regParam=reg_param, 
         userCol="user_id", 
         itemCol="item_id", 
         ratingCol="rating", 
@@ -47,28 +49,9 @@ def prepare_als_embeddings(items_path, ratings_path, save_directory, rank, maxIt
     embeddings = np.array(embeddings)
     assert embeddings.shape[0] == pd.read_csv(items_path).shape[0]
     
-    ### Normalize emeddings
-    embeddings_norm = np.linalg.norm(embeddings, axis=1)
-    nonzero_embeddings = embeddings_norm > 0.0 
-    embeddings[nonzero_embeddings] /= embeddings_norm[nonzero_embeddings, None]
+    ### Normalize & save embeddings
+    embeddings = normalize_embeddings(embeddings)
     np.save(os.path.join(save_directory, "embeddings.npy"), embeddings)
     
     ### Build index
-    index = faiss.IndexHNSWFlat(embeddings.shape[-1], 32)
-    index.add(embeddings)
-    faiss.write_index(index, os.path.join(save_directory, "index.faiss"))
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Prepare ALS embeddings.")
-    parser.add_argument("--items_path", required=True, type=str, help="Path to the file with items data.")
-    parser.add_argument("--ratings_path", required=True, type=str, help="Path to the ratings file.")
-    parser.add_argument("--save_directory", required=True, type=str, help="Directory where embeddings will be saved.")
-    parser.add_argument("--rank", type=int, default=32, help="Rank parameter for ALS. Defaults to 32.")
-    parser.add_argument("--maxIter", type=int, default=10, help="Maximum number of iterations. Defaults to 10.")
-    parser.add_argument("--regParam", type=float, default=0.1, help="Regularization parameter. Defaults to 0.1.")
-    args = parser.parse_args()
-
-    print("Preparing ALS embeddings...")
-    prepare_als_embeddings(args.items_path, args.ratings_path, args.save_directory, args.rank, args.maxIter, args.regParam)
-    print("ALS embeddings have been successfully prepared.")
+    build_index(embeddings, os.path.join(save_directory, "index.faiss"))

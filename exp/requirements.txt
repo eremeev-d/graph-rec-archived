@@ -1,2 +1,7 @@
 -r ../requirements.txt  # install base requirements of app
 pyspark==3.5.1  # for ALS
+dgl==2.1.0
+torch==2.1.2
+wandb==0.17.0
+tqdm==4.66.4
+pydantic==2.5.3
