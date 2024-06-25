@@ -8,12 +8,13 @@ from recommendations import RecommenderSystem
 def show_item(item_id):
     item = st.session_state["items_data"].iloc[item_id, :]
     title = item["title"]
-    st.write(f"**{title}**")
-    if st.button("Recommend similar items", key=item["item_id"]):
-        st.session_state["recommendation_query"] = item["item_id"]
-        st.session_state["search_query"] = None  # reset
-        st.rerun()
-    st.write("---") 
+    with st.container(border=True):
+        st.write(f"**{title}**")
+        st.write(item["description"])
+        if st.button("Recommend similar items", key=item["item_id"]):
+            st.session_state["recommendation_query"] = item["item_id"]
+            st.session_state["search_query"] = None  # reset
+            st.rerun()
 
 
 def main():
