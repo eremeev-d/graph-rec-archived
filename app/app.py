@@ -1,12 +1,21 @@
+import sqlite3
+
 import streamlit as st
-import pandas as pd
 
 from search import SearchSystem
 from recommendations import RecommenderSystem
 
 
+def get_item(item_id):
+    with sqlite3.connect("../data/items.db") as conn:
+        c = conn.cursor()
+        c.row_factory = sqlite3.Row
+        c.execute(f"select * from items where item_id like '{item_id}'")
+        return c.fetchone()
+
+
 def show_item(item_id):
-    item = st.session_state["items_data"].iloc[item_id, :]
+    item = get_item(item_id)
     title = item["title"]
     with st.container(border=True):
         st.write(f"**{title}**")
@@ -20,12 +29,9 @@ def show_item(item_id):
 def main():
     st.title("Graph-based Recommendation System")
 
-    if "items_data" not in st.session_state:
-        st.session_state["items_data"] = pd.read_csv(
-            "../data/items.csv")
     if "searchsys" not in st.session_state:
         st.session_state["searchsys"] = SearchSystem(
-            items_path="../data/items.csv")
+            items_path="../data/items.db")
     if "recsys" not in st.session_state:
         st.session_state["recsys"] = RecommenderSystem(
             faiss_index_path="../data/index.faiss",
@@ -44,8 +50,7 @@ def main():
 
     if st.session_state["recommendation_query"] is not None:
         recommendation_query = st.session_state["recommendation_query"]
-        recomendation_query_title = st.session_state["items_data"].iloc[
-            recommendation_query, :]["title"]
+        recomendation_query_title = get_item(recommendation_query)["title"]
         st.subheader(f'Recommendation Results for "{recomendation_query_title}"')
         results = st.session_state["recsys"].recommend_items(recommendation_query)
         for item_id in results:
