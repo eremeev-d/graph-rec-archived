@@ -3,6 +3,7 @@ import os
 
 from als import prepare_als_embeddings
 from deepwalk import prepare_deepwalk_embeddings
+from sbert import prepare_sbert_embeddings
 from evaluate import evaluate_recsys
 
 
@@ -37,6 +38,11 @@ def run_experiment(args):
             wandb_name=args.wandb_name,
             use_wandb=args.use_wandb,
         )
+    elif args.method == "SBERT":
+        prepare_sbert_embeddings(
+            items_path=items_path,
+            save_directory=args.save_directory
+        )
     else:
         raise ValueError("Invalid method of creating embeddings.")
     print("Embeddings have been successfully prepared.")
@@ -55,7 +61,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Prepare embeddings and evaluate the quality of the recommender system that uses these embeddings.")
 
     ### General args
-    parser.add_argument("--method", required=True, type=str, choices=["ALS", "DeepWalk"], help="Method of creating embeddings.")
+    parser.add_argument("--method", required=True, type=str, choices=["ALS", "DeepWalk", "SBERT"], help="Method of creating embeddings.")
     parser.add_argument("--data_directory", type=str, required=True, help="Path to the directory with items and train/val ratings files.")
     parser.add_argument("--save_directory", required=True, type=str, help="Directory where embeddings, FAISS index and metrics will be saved.")
     parser.add_argument("--n_recommend_items", type=int, default=10, help="Number of items to recommend (default: 10).")
