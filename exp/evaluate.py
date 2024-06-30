@@ -39,17 +39,27 @@ def evaluate_recsys(
         if len(item_group) == 1:
             continue
 
+        ### Precision@k is computed for each edge.
+        ### We will first aggregate it over all edges for user
+        ### And after that - aggregate over all users
+        user_metric_arrays = dict()
+        for metric in metric_arrays.keys():
+            user_metric_arrays[metric] = []
+
         for item in item_group:
             recommend_items = list(recsys.recommend_items(item, n_recommend_items))
             relevant_items = set(item_group) - {item}
 
-            # TODO: first aggregate by user?
-            metric_arrays["precision@1"].append(
+            user_metric_arrays["precision@1"].append(
                 precision_at_k(recommend_items, relevant_items, k=1))
-            metric_arrays["precision@3"].append(
+            user_metric_arrays["precision@3"].append(
                 precision_at_k(recommend_items, relevant_items, k=3))
-            metric_arrays["precision@10"].append(
+            user_metric_arrays["precision@10"].append(
                 precision_at_k(recommend_items, relevant_items, k=10))
+
+        for metric in metric_arrays.keys():
+            user_metric = np.mean(user_metric_arrays[metric])
+            metric_arrays[metric].append(user_metric)
 
     metrics = dict()
     for metric, array in metric_arrays.items():
