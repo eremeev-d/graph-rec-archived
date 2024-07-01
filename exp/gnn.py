@@ -1,3 +1,4 @@
+import argparse
 import os
 
 import numpy as np
@@ -7,7 +8,7 @@ import torch
 import wandb
 from tqdm.auto import tqdm
 
-from utils import prepare_graphs, normalize_embeddings, build_index, LRSchedule
+from utils import prepare_graphs, normalize_embeddings, LRSchedule
 
 
 class GNNLayer(torch.nn.Module):
@@ -145,7 +146,7 @@ def prepare_gnn_embeddings(
         ratings_path,
         text_embeddings_path,
         deepwalk_embeddings_path,
-        save_directory, 
+        embeddings_savepath, 
         # Learning hyperparameters
         temperature,
         batch_size, 
@@ -240,5 +241,41 @@ def prepare_gnn_embeddings(
 
     ### Extract & save item embeddings
     item_embeddings = normalize_embeddings(item_embeddings)
-    build_index(item_embeddings, os.path.join(save_directory, "index.faiss"))
-    np.save(os.path.join(save_directory, "embeddings.npy"), item_embeddings)
+    np.save(embeddings_savepath, item_embeddings)
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Prepare GNN Embeddings")
+
+    # Paths
+    parser.add_argument("--items_path", type=str, required=True, help="Path to the items file")
+    parser.add_argument("--ratings_path", type=str, required=True, help="Path to the ratings file")
+    parser.add_argument("--text_embeddings_path", type=str, required=True, help="Path to the text embeddings file")
+    parser.add_argument("--deepwalk_embeddings_path", type=str, required=True, help="Path to the deepwalk embeddings file")
+    parser.add_argument("--embeddings_savepath", type=str, required=True, help="Path to the file where gnn embeddings will be saved")
+
+    # Learning hyperparameters
+    parser.add_argument("--temperature", type=float, default=0.1, help="Temperature for NT-Xent loss")
+    parser.add_argument("--batch_size", type=int, default=512, help="Batch size for training")
+    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--num_epochs", type=int, default=4, help="Number of epochs")
+
+    # Model hyperparameters
+    parser.add_argument("--num_layers", type=int, default=2, help="Number of layers in the model")
+    parser.add_argument("--hidden_dim", type=int, default=384, help="Hidden dimension size")
+    parser.add_argument("--aggregator_type", type=str, default="mean", help="Type of aggregator in SAGEConv")
+    parser.add_argument("--no_skip_connection", action="store_false", dest="skip_connection", help="Disable skip connections")
+    parser.add_argument("--no_bidirectional", action="store_false", dest="bidirectional", help="Do not use reversed edges in convolution")
+    parser.add_argument("--num_traversals", type=int, default=4, help="Number of traversals in PinSAGE-like sampler")
+    parser.add_argument("--termination_prob", type=float, default=0.5, help="Termination probability in PinSAGE-like sampler")
+    parser.add_argument("--num_random_walks", type=int, default=200, help="Number of random walks in PinSAGE-like sampler")
+    parser.add_argument("--num_neighbor", type=int, default=3, help="Number of neighbors in PinSAGE-like sampler")
+
+    # Misc
+    parser.add_argument("--device", type=str, default="cpu", help="Device to run the model on (cpu or cuda)")
+    parser.add_argument("--wandb_name", type=str, help="WandB run name")
+    parser.add_argument("--no_wandb", action="store_false", dest="use_wandb", help="Disable WandB logging")
+
+    args = parser.parse_args()
+
+    prepare_gnn_embeddings(**vars(args))

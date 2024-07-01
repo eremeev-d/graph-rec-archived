@@ -2,7 +2,6 @@ import numpy as np
 import pandas as pd
 import dgl
 import torch
-import faiss
 
 
 def normalize_embeddings(embeddings):
@@ -10,12 +9,6 @@ def normalize_embeddings(embeddings):
     nonzero_embeddings = embeddings_norm > 0.0 
     embeddings[nonzero_embeddings] /= embeddings_norm[nonzero_embeddings, None]
     return embeddings
-
-
-def build_index(embeddings, save_path, n_neighbors=32):
-    index = faiss.IndexHNSWFlat(embeddings.shape[-1], 32)
-    index.add(embeddings)
-    faiss.write_index(index, save_path)
 
 
 def prepare_graphs(items_path, ratings_path):

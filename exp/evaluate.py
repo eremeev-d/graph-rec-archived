@@ -18,7 +18,7 @@ def evaluate_recsys(
     val_ratings_path, 
     faiss_index_path, 
     embeddings_path,
-    n_recommend_items=10,
+    n_recommend_items,
 ):
     recsys = RecommenderSystem(
         faiss_index_path=faiss_index_path, 
@@ -68,3 +68,14 @@ def evaluate_recsys(
     with open(metrics_savepath, "w") as f:
         json.dump(metrics, f)
     print(f"Saved metrics to {metrics_savepath}")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Evaluate a recommendation system.")
+    parser.add_argument("--metrics_savepath", required=True, type=str, help="Path to save the evaluation metrics.")
+    parser.add_argument("--val_ratings_path", required=True, type=str, help="Path to the csv file with validation ratings.")
+    parser.add_argument("--faiss_index_path", required=True, type=str, help="Path to the FAISS index.")
+    parser.add_argument("--embeddings_path", required=True, type=str, help="Path to the embeddings file.")
+    parser.add_argument("--n_recommend_items", type=int, default=10, help="Number of items to recommend.")
+    args = parser.parse_args()
+    evaluate_recsys(**vars(args))
