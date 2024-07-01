@@ -27,7 +27,7 @@ def show_item(item_id):
 
 
 def main():
-    st.title("Graph-based Recommendation System")
+    st.title("Graph-based RecSys")
 
     if "searchsys" not in st.session_state:
         st.session_state["searchsys"] = SearchSystem(
