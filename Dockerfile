@@ -9,8 +9,8 @@ COPY data data
 RUN mkdir /app
 COPY app app
 
-WORKDIR /app
-
 EXPOSE 8501
 
-ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501"]
+ENV PYTHONPATH .
+
+ENTRYPOINT ["streamlit", "run", "app/main.py", "--server.port=8501"]

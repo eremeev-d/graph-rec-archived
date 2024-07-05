@@ -17,12 +17,12 @@ def evaluate_recsys(
     metrics_savepath,
     val_ratings_path, 
     faiss_index_path, 
-    embeddings_path,
+    db_path,
     n_recommend_items,
 ):
     recsys = RecommenderSystem(
         faiss_index_path=faiss_index_path, 
-        embeddings_path=embeddings_path)
+        db_path=db_path)
 
     val_ratings = pd.read_csv(val_ratings_path)
     grouped_items = val_ratings.groupby("user_id")["item_id"].apply(list).reset_index()
@@ -75,7 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--metrics_savepath", required=True, type=str, help="Path to save the evaluation metrics.")
     parser.add_argument("--val_ratings_path", required=True, type=str, help="Path to the csv file with validation ratings.")
     parser.add_argument("--faiss_index_path", required=True, type=str, help="Path to the FAISS index.")
-    parser.add_argument("--embeddings_path", required=True, type=str, help="Path to the embeddings file.")
+    parser.add_argument("--db_path", required=True, type=str, help="Path to the database file.")
     parser.add_argument("--n_recommend_items", type=int, default=10, help="Number of items to recommend.")
     args = parser.parse_args()
     evaluate_recsys(**vars(args))

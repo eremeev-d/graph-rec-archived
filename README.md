@@ -32,7 +32,7 @@ Finally, simply run the following command at the root of the repo:
 ```
 sh exp/prepare_embeddings.sh INPUT_DIRECTORY SAVE_DIRECTORY
 ```
-where `INPUT_DIRECTORY` is path to the directory with raw data (e.g. `/kaggle/input/graph-rec-goodreads/goodreads-books`). And `SAVE_DIRECTORY` is path to the directory, where results will be saved (e.g. `/kaggle/working/embeddings`). To use obtained embeddings, copy the following files to the `app/data`: `embeddings.npy`, `index.faiss` and `items.db`.
+where `INPUT_DIRECTORY` is path to the directory with raw data (e.g. `/kaggle/input/graph-rec-goodreads/goodreads-books`). And `SAVE_DIRECTORY` is path to the directory, where results will be saved (e.g. `/kaggle/working/embeddings`). To use obtained embeddings, copy the following files to the `app/data`: `index.faiss` and `items.db`.
 
 For further information, refer to the `exp` directory in this repo.
 

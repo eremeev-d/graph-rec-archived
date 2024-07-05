@@ -1,3 +1,6 @@
+#!/bin/bash
+set -e
+
 input_directory="$1"
 save_directory="$2"
 
@@ -30,13 +33,14 @@ PYTHONPATH=. python exp/prepare_index.py \
 
 PYTHONPATH=. python exp/prepare_db.py \
     --items_path "$save_directory/items.csv" \
+    --embeddings_path "$save_directory/embeddings.npy" \
     --db_path "$save_directory/items.db"
 
 PYTHONPATH=. python exp/evaluate.py \
     --metrics_savepath "$save_directory/metrics.json" \
     --val_ratings_path "$save_directory/val_ratings.csv" \
     --faiss_index_path "$save_directory/index.faiss" \
-    --embeddings_path "$save_directory/embeddings.npy"
+    --db_path "$save_directory/items.db"
 
 echo "Evaluation metrics:"
 cat "$save_directory/metrics.json"
