@@ -42,7 +42,7 @@ def extract_item_embeddings(node_embeddings, bipartite_graph, graph):
     item_embeddings = node_embeddings[item_mask]
     original_ids = graph.ndata[dgl.NID][item_mask]
     item_embeddings = item_embeddings[torch.argsort(original_ids)]
-    return item_embeddings.numpy()
+    return item_embeddings.cpu().numpy()
 
 
 class LRSchedule:

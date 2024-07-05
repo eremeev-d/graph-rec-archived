@@ -26,6 +26,8 @@ def prepare_deepwalk_embeddings(
 ):
     ### Prepare graph
     bipartite_graph, graph = prepare_graphs(items_path, ratings_path)
+    bipartite_graph = bipartite_graph.to(device)
+    graph = graph.to(device)
 
     ### Run deepwalk
     if use_wandb:

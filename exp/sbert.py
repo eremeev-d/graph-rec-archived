@@ -14,10 +14,11 @@ def prepare_sbert_embeddings(
         embeddings_savepath, 
         model_name,
         batch_size,
+        device
 ):
     items = pd.read_csv(items_path).sort_values("item_id")
     sentences = items["description"].values
-    model = SentenceTransformer(model_name)
+    model = SentenceTransformer(model_name).to(device)
     embeddings = []
     for start_index in tqdm(range(0, len(sentences), batch_size)):
         batch = sentences[start_index:start_index+batch_size]
@@ -32,6 +33,7 @@ if __name__ == "__main__":
     parser.add_argument("--embeddings_savepath", type=str, required=True, help="Path to save the embeddings.")
     parser.add_argument("--model_name", type=str, default="sentence-transformers/all-MiniLM-L6-v2", help="Name of the SBERT model to use.")
     parser.add_argument("--batch_size", type=int, default=32, help="Batch size.")
+    parser.add_argument("--device", type=str, default="cpu", help="Device to use for training (cpu or cuda).")
     args = parser.parse_args()
 
     prepare_sbert_embeddings(**vars(args))

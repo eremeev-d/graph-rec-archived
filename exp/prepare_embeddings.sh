@@ -3,6 +3,9 @@ set -e
 
 input_directory="$1"
 save_directory="$2"
+device="${3:-cpu}"
+
+echo Running on "$device".
 
 PYTHONPATH=. python exp/process_raw_data.py \
     --input_directory "$input_directory" \
@@ -13,19 +16,22 @@ PYTHONPATH=. python exp/deepwalk.py \
     --items_path "$save_directory/items.csv" \
     --ratings_path "$save_directory/train_ratings.csv" \
     --embeddings_savepath "$save_directory/deepwalk_embeddings.npy" \
+    --device $device \
     --no_wandb
 
 PYTHONPATH=. python exp/sbert.py \
     --items_path "$save_directory/items.csv" \
-    --embeddings_savepath "$save_directory/text_embeddings.npy"
+    --embeddings_savepath "$save_directory/text_embeddings.npy" \
+    --device $device
 
 PYTHONPATH=. python exp/gnn.py \
     --items_path "$save_directory/items.csv" \
     --ratings_path "$save_directory/train_ratings.csv" \
     --text_embeddings_path "$save_directory/text_embeddings.npy" \
     --deepwalk_embeddings_path "$save_directory/deepwalk_embeddings.npy" \
-    --embeddings_savepath "$save_directory/embeddings.npy" \
-    --no_wandb
+    --embeddings_savepath "$save_directory/embeddings.npy"\
+    --device $device \
+    --no_wandb 
 
 PYTHONPATH=. python exp/prepare_index.py \
     --embeddings_path "$save_directory/embeddings.npy" \

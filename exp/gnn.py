@@ -72,16 +72,18 @@ class GNNModel(torch.nn.Module):
 
     def _sample_subraph(self, frontier_ids):
         num_layers = len(self._layers)
+        device = self._bipartite_graph.device
 
-        subgraph = dgl.graph(([], []), num_nodes=self._bipartite_graph.num_nodes("Item"))
+        subgraph = dgl.graph(([], []), num_nodes=self._bipartite_graph.num_nodes("Item")).to(device)
         prev_ids = set()
 
         for _ in range(num_layers):
-            new_edges = self._sampler(list(frontier_ids)).edges()
+            frontier_ids = torch.tensor(frontier_ids, dtype=torch.int64).to(device)
+            new_edges = self._sampler(frontier_ids).edges()
             subgraph.add_edges(*new_edges)
-            prev_ids |= set(frontier_ids)
-            frontier_ids = set(dgl.compact_graphs(subgraph).ndata[dgl.NID])
-            frontier_ids = frontier_ids - prev_ids
+            prev_ids |= set(frontier_ids.cpu().tolist())
+            frontier_ids = set(dgl.compact_graphs(subgraph).ndata[dgl.NID].cpu().tolist())
+            frontier_ids = list(frontier_ids - prev_ids)
             
         return subgraph
 
@@ -120,7 +122,7 @@ def nt_xent_loss(sim, temperature):
 
     aligment_loss = -torch.mean(sim[torch.arange(n), torch.arange(n)+n])
 
-    mask = torch.diag(torch.ones(2*n, dtype=torch.bool))
+    mask = torch.diag(torch.ones(2*n, dtype=torch.bool)).to(sim.device)
     sim = torch.where(mask, -torch.inf, sim)
     sim = sim[:n, :]
     distribution_loss = torch.mean(torch.logsumexp(sim, dim=1))
@@ -169,14 +171,15 @@ def prepare_gnn_embeddings(
 ):
     ### Prepare graph
     bipartite_graph, _ = prepare_graphs(items_path, ratings_path)
+    bipartite_graph = bipartite_graph.to(device)
 
     ### Init wandb
     if use_wandb:
         wandb.init(project="graph-rec-gnn", name=wandb_name)
 
     ### Prepare model
-    text_embeddings = torch.tensor(np.load(text_embeddings_path))
-    deepwalk_embeddings = torch.tensor(np.load(deepwalk_embeddings_path))
+    text_embeddings = torch.tensor(np.load(text_embeddings_path)).to(device)
+    deepwalk_embeddings = torch.tensor(np.load(deepwalk_embeddings_path)).to(device)
     model = GNNModel(
         bipartite_graph=bipartite_graph, 
         text_embeddings=text_embeddings, 
@@ -194,7 +197,7 @@ def prepare_gnn_embeddings(
     model = model.to(device)
 
     ### Prepare dataloader
-    all_users = torch.arange(bipartite_graph.num_nodes("User"))
+    all_users = torch.arange(bipartite_graph.num_nodes("User")).to(device)
     all_users = all_users[bipartite_graph.in_degrees(all_users, etype="ItemUser") > 1] # We need to sample 2 items per user
     dataloader = torch.utils.data.DataLoader(
         all_users, batch_size=batch_size, shuffle=True, drop_last=True)
@@ -231,16 +234,16 @@ def prepare_gnn_embeddings(
     model.eval()
     with torch.no_grad():
         hidden_dim = text_embeddings.shape[-1]
-        item_embeddings = torch.zeros(bipartite_graph.num_nodes("Item"), hidden_dim)
+        item_embeddings = torch.zeros(bipartite_graph.num_nodes("Item"), hidden_dim).to(device)
         for items_batch in tqdm(torch.utils.data.DataLoader(
                 torch.arange(bipartite_graph.num_nodes("Item")), 
                 batch_size=batch_size, 
                 shuffle=True
         )):
-            item_embeddings[items_batch] = model(items_batch)
+            item_embeddings[items_batch] = model(items_batch.to(device))
 
     ### Extract & save item embeddings
-    item_embeddings = normalize_embeddings(item_embeddings)
+    item_embeddings = normalize_embeddings(item_embeddings.cpu().numpy())
     np.save(embeddings_savepath, item_embeddings)
 
 
